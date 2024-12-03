@@ -1,29 +1,29 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { yupResolver } from '@hookform/resolvers/yup';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { Stack } from '@mui/material';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { yupResolver } from "@hookform/resolvers/yup";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { Button, Stack } from "@mui/material";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
-import { LoadingButton } from '@mui/lab';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import * as yup from 'yup';
-import { userApi } from '../../../apis/user.api';
-import { PATH } from '../../../routes/path';
-import { setCurrentUser } from '../../../store/slices/user.slice';
+import { LoadingButton } from "@mui/lab";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import * as yup from "yup";
+import { userApi } from "../../../apis/user.api";
+import { PATH } from "../../../routes/path";
+import { setCurrentUser } from "../../../store/slices/user.slice";
 
 const schema = yup.object().shape({
-  taiKhoan: yup.string().required('Tên đăng nhập không được để trống'),
-  matKhau: yup.string().required('Mật khẩu không được để trống'),
+  taiKhoan: yup.string().required("Tên đăng nhập không được để trống"),
+  matKhau: yup.string().required("Mật khẩu không được để trống"),
 });
 
 export default function LoginPage() {
@@ -35,12 +35,12 @@ export default function LoginPage() {
     mutationFn: (formValues) => userApi.login(formValues),
     onSuccess: (data) => {
       const currentUser = data.content;
-      toast.success('Đăng nhập thành công');
+      toast.success("Đăng nhập thành công");
       dispatch(setCurrentUser(currentUser));
-      currentUser.maLoaiNguoiDung === 'QuanTri' ? navigate(PATH.ADMIN) : navigate(PATH.HOME);
+      navigate(PATH.HOME);
     },
     onError: (error) => {
-      toast.error(error.content || 'Đăng nhập thất bại. Vui lòng thử lại sau');
+      toast.error(error.content || "Đăng nhập thất bại. Vui lòng thử lại sau");
     },
   });
 
@@ -50,8 +50,8 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      taiKhoan: '',
-      matKhau: '',
+      taiKhoan: "",
+      matKhau: "",
     },
     resolver: yupResolver(schema),
   });
@@ -68,15 +68,22 @@ export default function LoginPage() {
 
   return (
     <Box className="w-[450px]">
-      <Typography fontSize={40} fontWeight={700} textAlign={'center'} component="h4">
+      <Typography
+        fontSize={40}
+        fontWeight={700}
+        textAlign={"center"}
+        component="h4"
+      >
         Đăng nhập
       </Typography>
-      <Typography className=" text-gray-500 text-center my-2">Hi, chào mừng bạn trở lại 👋</Typography>
+      <Typography className=" text-gray-500 text-center my-2">
+        Hi, chào mừng bạn trở lại 👋
+      </Typography>
 
       <form className="mt-8" onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={3}>
           <TextField
-            {...register('taiKhoan')}
+            {...register("taiKhoan")}
             fullWidth
             placeholder="Tên đăng nhập"
             label="Tên đăng nhập"
@@ -85,8 +92,8 @@ export default function LoginPage() {
             helperText={errors.taiKhoan?.message}
           />
           <TextField
-            type={showPassword ? 'text' : 'password'}
-            {...register('matKhau')}
+            type={showPassword ? "text" : "password"}
+            {...register("matKhau")}
             fullWidth
             placeholder="Mật khẩu"
             label="Mật khẩu"
@@ -95,7 +102,11 @@ export default function LoginPage() {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={showPassword ? 'hide the password' : 'display the password'}
+                    aria-label={
+                      showPassword
+                        ? "hide the password"
+                        : "display the password"
+                    }
                     onClick={handleClickShowPassword}
                     edge="end"
                   >
@@ -121,6 +132,16 @@ export default function LoginPage() {
           </LoadingButton>
         </Stack>
       </form>
+      <Typography className="text-center">
+        Bạn chưa có tài khoản?
+        <Button
+          onClick={() => {
+            navigate(PATH.REGISTER);
+          }}
+        >
+          Nhấn vào đây để đăng kí.
+        </Button>
+      </Typography>
     </Box>
   );
 }

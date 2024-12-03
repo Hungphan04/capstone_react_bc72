@@ -11,7 +11,8 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { PATH } from "../../routes/path";
-import { logout } from "../../store/slices/user.slice";
+import { logout, setCurrentUser } from "../../store/slices/user.slice";
+import { toast } from "react-hot-toast";
 import { PropTypes } from "prop-types";
 
 const Header = () => {
@@ -32,6 +33,7 @@ const Header = () => {
   const handleLogout = () => {
     dispatch(logout());
     setAnchorEl(null);
+    toast.success('Đăng xuất thành công');
   };
 
   const handleMenu = (event) => {
@@ -39,7 +41,7 @@ const Header = () => {
   };
 
   return (
-    <div className="p-4 flex justify-between top-0 left-0 w-full z-[9999]  bg-white">
+    <div className="p-4 flex justify-between top-0 left-0 w-full z-[9999] bg-white">
       <div className="flex items-center gap-8">
         <h1 className="text-[30px] uppercase text-red-700 font-bold">Movie</h1>
         <nav className="hidden md:flex items-center space-x-5 text-black">
@@ -73,7 +75,7 @@ const Header = () => {
         ) : (
           <>
             <Avatar onClick={handleMenu} sx={{ cursor: "pointer" }}>
-              {currentUser.hoTen.charAt(0)}
+              U
             </Avatar>
             <Menu
               anchorEl={anchorEl}

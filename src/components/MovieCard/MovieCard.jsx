@@ -1,104 +1,170 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import Modal from "react-modal";
-import YouTube from "react-youtube";
+import {
+  Card,
+  CardContent,
+  Button,
+  Modal,
+  Box,
+  Typography,
+} from "@mui/material";
+import { FaStar } from "react-icons/fa";
 
 export default function MovieCard({ movie }) {
   const [modalIsOpen, setIsOpen] = useState(false);
+
   const customStyles = {
-    content: {
-      top: "50%",
-      left: "50%",
-      right: "auto",
-      bottom: "auto",
-      marginRight: "-50%",
-      transform: "translate(-50%, -50%)",
-    },
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "50%",
+    bgcolor: "background.paper",
+    boxShadow: 24,
+    p: 4,
   };
-  const opts = {
-    height: "390",
-    width: "640",
-    playerVars: {
-      autoplay: 1,
-    },
-  };
+
   const getVideoId = (url) => {
-    const match = url.match(/(?:https?:\/\/(?:www\.)?youtube\.com\/(?:[^\/\n\s]+\/[^\n\s]+\/?|(?:v|e(?:mbed)?)\/|\S+?[?&]v=)|(?:https?:\/\/(?:www\.)?youtu\.be\/))([a-zA-Z0-9_-]{11})/);
+    const match = url.match(
+      /(?:https?:\/\/(?:www\.)?youtube\.com\/(?:[^\/\n\s]+\/[^\n\s]+\/?|(?:v|e(?:mbed)?)\/|\S+?[?&]v=)|(?:https?:\/\/(?:www\.)?youtu\.be\/))([a-zA-Z0-9_-]{11})/
+    );
     return match ? match[1] : null;
   };
 
   return (
-    <div className="max-w-sm mx-auto bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-      <Link to={`/movie/${movie.maPhim}`}>
+    <Card
+      sx={{
+        position: "relative",
+        width: "100%",
+        height: "450px",
+        borderRadius: "8px",
+        boxShadow: 3,
+        overflow: "hidden",
+        transition: "transform 0.3s ease",
+        "&:hover": { transform: "scale(1.05)" },
+        "&:hover .overlay": { opacity: 0.9 },
+        "&:hover .action-buttons": { opacity: 1 },
+      }}
+    >
+      <Link to={`/movie/${movie.maPhim}`} className="relative w-full">
         <img
-          className="rounded-t-lg w-full h-60 sm:h-72 md:h-80 object-cover"
+          className="w-full object-cover"
           src={movie.hinhAnh}
           alt={movie.tenPhim}
+          style={{
+            height: "100%",
+            width: "100%",
+            objectFit: "cover",
+          }}
         />
       </Link>
-      <div className="p-5">
-        <h5 className="mb-4 text-lg sm:text-xl md:text-2xl text-center font-semibold tracking-tight text-gray-900 dark:text-white truncate">
+      <Box
+        className="overlay"
+        sx={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "100%",
+          background: "rgba(0, 0, 0, 0.7)",
+          opacity: 0,
+          color: "white",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          transition: "opacity 0.3s ease",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            color: "white",
+            padding: "16px",
+            fontSize: "18px",
+          }}
+        >
           {movie.tenPhim}
-        </h5>
-        <div className="flex flex-wrap justify-between space-y-4 md:space-y-0 px-8">
-          <Link
+        </Typography>
+        <Box
+          display="flex"
+          alignItems="center"
+          sx={{ paddingLeft: "16px", paddingBottom: "16px" }}
+        >
+          <FaStar style={{ color: "#FFD700", marginRight: "4px" }} />
+          <Typography variant="body2">{movie.danhGia} / 10</Typography>
+        </Box>
+      </Box>
+      <CardContent
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          position: "absolute",
+          top: 0,
+          width: "100%",
+          height: "100%",
+          opacity: 0,
+          transition: "opacity 0.3s ease",
+        }}
+        className="action-buttons"
+      >
+        <Box sx={{ display: "flex", gap: "8px", flexDirection: "column" }}>
+          <Button
+            component={Link}
             to={`/movie/${movie.maPhim}`}
-            className="inline-flex items-center w-full md:w-auto justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            variant="contained"
+            sx={{
+              backgroundColor: "rgba(255, 87, 34, 0.8)",
+              color: "white",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "bold",
+              "&:hover": {
+                backgroundColor: "rgba(255, 87, 34, 1)",
+              },
+            }}
           >
-            Read more
-            <svg
-              className="rtl:rotate-180 w-3.5 h-3.5 ml-2"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 14 10"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M1 5h12m0 0L9 1m4 4L9 9"
-              />
-            </svg>
-          </Link>
-
-          <button
-            onClick={() => setIsOpen(true)} 
-            className="inline-flex items-center w-full md:w-auto justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            Mua vé
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{
+              color: "white",
+              borderColor: "white",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "bold",
+              "&:hover": {
+                borderColor: "rgba(255, 87, 34, 0.8)",
+                color: "rgba(255, 87, 34, 0.8)",
+              },
+            }}
+            onClick={() => setIsOpen(true)}
           >
-            Xem trailer
-            <svg
-              className="rtl:rotate-180 w-3.5 h-3.5 ml-2"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 14 10"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M1 5h12m0 0L9 1m4 4L9 9"
-              />
-            </svg>
-          </button>
-          <Modal
-            isOpen={modalIsOpen}
-            onRequestClose={() => setIsOpen(false)}
-            style={customStyles}
-            contentLabel="Movie Trailer"
-          >
-            {movie.trailer && (
-              <YouTube
-                videoId={getVideoId(movie.trailer)}
-                opts={opts}
-              />
-            )}
-          </Modal>
-        </div>
-      </div>
-    </div>
+            Trailer
+          </Button>
+        </Box>
+      </CardContent>
+      <Modal
+        open={modalIsOpen}
+        onClose={() => setIsOpen(false)}
+        aria-labelledby="movie-trailer"
+        aria-describedby="modal-to-show-trailer"
+      >
+        <Box sx={customStyles}>
+          {movie.trailer && (
+            <iframe
+              width="100%"
+              height="400px"
+              src={`https://www.youtube.com/embed/${getVideoId(movie.trailer)}`}
+              title="Movie Trailer"
+              frameBorder="0"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          )}
+        </Box>
+      </Modal>
+    </Card>
   );
 }

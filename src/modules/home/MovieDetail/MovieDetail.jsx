@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import fetcher from "../../../apis/fetcher";
 import Modal from "react-modal";
-import YouTube from "react-youtube";
 import { Box, Typography, Grid, CardMedia, Card, Button } from "@mui/material";
 import { format } from "date-fns";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { PATH } from "../../../routes/path";
 
 export default function MovieDetail() {
   const { id } = useParams();
@@ -12,6 +14,11 @@ export default function MovieDetail() {
   const [error, setError] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [modalIsOpen, setIsOpen] = useState(false);
+  const [trailerModalIsOpen, setTrailerModalIsOpen] = useState(false);
+  const [cinemas, setCinemas] = useState([]);
+  const [selectedCinema, setSelectedCinema] = useState("");
+  const [selectedShowTime, setSelectedShowTime] = useState("");
+  const navigate = useNavigate();
   const customStyles = {
     content: {
       top: "50%",
@@ -20,21 +27,40 @@ export default function MovieDetail() {
       bottom: "auto",
       marginRight: "-50%",
       transform: "translate(-50%, -50%)",
+      width: "80%",
+      maxWidth: "800px",
+      maxHeight: "80vh",
+      overflowY: "auto",
+      backgroundColor: "#fcfcf0",
+      zIndex: 1050,
+    },
+    overlay: {
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+      zIndex: 1040,
     },
   };
-  const opts = {
-    height: "390",
-    width: "640",
-    playerVars: {
-      autoplay: 1,
+
+  const buttonStyles = {
+    default: {
+      backgroundColor: "#fcfcf0",
+      color: "#000",
+      "&:hover": {
+        backgroundColor: "#f0f0e1",
+      },
+    },
+    selected: {
+      backgroundColor: "#000",
+      color: "#fff",
     },
   };
+
   const getVideoId = (url) => {
     const match = url.match(
       /(?:https?:\/\/(?:www\.)?youtube\.com\/(?:[^\/\n\s]+\/[^\n\s]+\/?|(?:v|e(?:mbed)?)\/|\S+?[?&]v=)|(?:https?:\/\/(?:www\.)?youtu\.be\/))([a-zA-Z0-9_-]{11})/
     );
     return match ? match[1] : null;
   };
+
   useEffect(() => {
     const fetchMovieDetail = async () => {
       try {
@@ -49,8 +75,59 @@ export default function MovieDetail() {
       }
     };
 
+    const fetchCinemaAndShowTimes = async () => {
+      try {
+        const response = await fetcher.get(
+          `/QuanLyRap/LayThongTinLichChieuPhim?MaPhim=${id}`
+        );
+        setCinemas(response.data.content.heThongRapChieu);
+      } catch (error) {
+        setError(error);
+      }
+    };
+
     fetchMovieDetail();
+    fetchCinemaAndShowTimes();
   }, [id]);
+  const handleConfirmBooking = () => {
+    if (selectedCinema && selectedShowTime) {
+      const cinemaName =
+        cinemas.find((cinema) => cinema.maHeThongRap === selectedCinema)
+          ?.tenHeThongRap || "Rạp không xác định";
+
+      const selectedShow = cinemas
+        .flatMap((cinema) =>
+          cinema.cumRapChieu.flatMap((cumRap) =>
+            cumRap.lichChieuPhim.find(
+              (lichChieu) => lichChieu.maLichChieu === selectedShowTime
+            )
+          )
+        )
+        .find((show) => show);
+
+      if (selectedShow) {
+        const selectedDate = new Date(selectedShow.ngayChieuGioChieu);
+        toast.info(
+          `Đặt vé thành công. Đừng quên bạn có hẹn với ${cinemaName} vào lúc ${format(
+            selectedDate,
+            "HH:mm"
+          )} ngày ${format(selectedDate, "dd/MM/yyyy")}.`,
+          { position: "top-center", autoClose: 2000 }
+        );
+      } else {
+        toast.error("Không tìm thấy lịch chiếu được chọn.", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+      }
+      setIsOpen(false);
+    } else {
+      toast.warn("Vui lòng chọn rạp và giờ chiếu trước khi xác nhận!", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    }
+  };
 
   if (isLoading) {
     return <Typography>Loading...</Typography>;
@@ -140,7 +217,8 @@ export default function MovieDetail() {
               flexGrow: 0,
             }}
           >
-            {movieDetails.moTa || 'Phim kinh dị "Cám" là phiên bản phóng tác từ truyện cổ tích "Tấm Cám", sẽ ra mắt vào ngày 20 tháng 9 năm 2024. Phim nội dung xoay quanh những tình huống kinh dị đẫm máu, kèm theo các nhân vật mới như Hai Hoàng, Bờm và Bạch Lão, khác biệt so với phiên bản gốc.'}
+            {movieDetails.moTa ||
+              "Phim Cám là tác phẩm điện ảnh được chuyển thể từ truyện cổ tích “Tấm Cám” với tên gọi cũ là phim Con Cám. Có rất nhiều dị bản của Tấm Cám mang hơi hướng thần kỳ, kinh dị nhưng điểm chung đó là đều phản ánh các mâu thuẫn và mối quan hệ mẹ kế - con chồng trong thời đại cũ. Nhận thấy được tiềm năng khai thác từ chủ đề này, đạo diễn Trần Hữu Tấn đã phát triển và dựng thành phim Tấm Cám bản gốc kinh dị."}
           </Typography>
           {movieDetails.danhGia && (
             <Typography
@@ -156,13 +234,19 @@ export default function MovieDetail() {
           )}
           <Typography
             variant="body2"
-            sx={{ marginBottom: "20px", flexGrow: 0 }}
+            sx={{ marginBottom: "10px", flexGrow: 0 }}
           >
-            Release Date:{" "}
+            Ngày khởi chiếu:{" "}
             {movieDetails.ngayKhoiChieu &&
             !isNaN(new Date(movieDetails.ngayKhoiChieu))
               ? format(new Date(movieDetails.ngayKhoiChieu), "dd/MM/yyyy")
               : "Coming soon"}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ marginBottom: "10px", flexGrow: 0 }}
+          >
+            Tình trạng: {movieDetails.dangChieu ? "Đang chiếu" : "Sắp chiếu"}
           </Typography>
           <Box
             sx={{
@@ -172,43 +256,152 @@ export default function MovieDetail() {
               alignItems: "flex-start",
             }}
           >
-            <Button variant="contained" color="warning">
-              Watch Movie
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() => {
+                const isLoggedIn = localStorage.getItem("user");
+                if (!isLoggedIn) {
+                  navigate(PATH.LOGIN);
+                  return;
+                }
+                setIsOpen(true);
+              }}
+            >
+              Đặt vé ngay
             </Button>
-            <button
-              onClick={() => setIsOpen(true)}
-              className="inline-flex items-center w-full md:w-auto justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setTrailerModalIsOpen(true)}
+              sx={{
+                backgroundColor: "#1e1e1e",
+                color: "#fff",
+                "&:hover": {
+                  backgroundColor: "#000",
+                },
+              }}
             >
               Xem trailer
-              <svg
-                className="rtl:rotate-180 w-3.5 h-3.5 ml-2"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 14 10"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M1 5h12m0 0L9 1m4 4L9 9"
-                />
-              </svg>
-            </button>
+            </Button>
             <Modal
               isOpen={modalIsOpen}
               onRequestClose={() => setIsOpen(false)}
               style={customStyles}
-              contentLabel="Movie Trailer"
+              contentLabel="Movie Ticket Booking"
             >
+              <Typography variant="h5" gutterBottom>
+                Chọn Rạp và Giờ Chiếu
+              </Typography>
+              <Grid container spacing={2} sx={{ marginBottom: 2 }}>
+                <Grid item xs={12}>
+                  <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                    {cinemas.map((cinema) => (
+                      <Button
+                        key={cinema.maHeThongRap}
+                        variant="contained"
+                        sx={{
+                          ...buttonStyles.default,
+                          ...(selectedCinema === cinema.maHeThongRap &&
+                            buttonStyles.selected),
+                        }}
+                        onClick={() => setSelectedCinema(cinema.maHeThongRap)}
+                      >
+                        {cinema.tenHeThongRap}
+                      </Button>
+                    ))}
+                  </Box>
+                </Grid>
+              </Grid>
+              {selectedCinema && (
+                <Grid container spacing={2}>
+                  {cinemas
+                    .filter((cinema) => cinema.maHeThongRap === selectedCinema)
+                    .flatMap((cinema) =>
+                      cinema.cumRapChieu.map((cumRap) => (
+                        <Grid item xs={12} key={cumRap.maCumRap}>
+                          <Typography variant="h6">
+                            {cumRap.tenCumRap}
+                          </Typography>
+                          <Box
+                            sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}
+                          >
+                            {cumRap.lichChieuPhim.map((lichChieu) => (
+                              <Button
+                                key={lichChieu.maLichChieu}
+                                variant="contained"
+                                sx={{
+                                  ...buttonStyles.default,
+                                  ...(selectedShowTime ===
+                                    lichChieu.maLichChieu &&
+                                    buttonStyles.selected),
+                                }}
+                                onClick={() =>
+                                  setSelectedShowTime(lichChieu.maLichChieu)
+                                }
+                              >
+                                {format(
+                                  new Date(lichChieu.ngayChieuGioChieu),
+                                  "HH:mm dd/MM/yyyy"
+                                )}
+                              </Button>
+                            ))}
+                          </Box>
+                        </Grid>
+                      ))
+                    )}
+                </Grid>
+              )}
+
+              <Button
+                variant="contained"
+                sx={{
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  marginTop: 2,
+                  marginLeft: "auto",
+                  display: "block",
+                  "&:hover": {
+                    backgroundColor: "#333",
+                  },
+                }}
+                onClick={handleConfirmBooking}
+              >
+                Xác nhận đặt vé
+              </Button>
+            </Modal>
+            <Modal
+              isOpen={trailerModalIsOpen}
+              onRequestClose={() => setTrailerModalIsOpen(false)}
+              style={customStyles}
+              contentLabel="Trailer"
+            >
+              <Typography variant="h5" gutterBottom>
+                Xem Trailer
+              </Typography>
               {movieDetails.trailer && (
-                <YouTube videoId={getVideoId(movieDetails.trailer)} opts={opts} />
+                <iframe
+                  width="100%"
+                  height="400px"
+                  src={`https://www.youtube.com/embed/${getVideoId(
+                    movieDetails.trailer
+                  )}`}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
               )}
             </Modal>
           </Box>
         </Grid>
       </Grid>
+      <ToastContainer
+        style={{
+          width: "600px",
+          marginLeft: "auto",
+          marginRight: "auto",
+        }}
+      />
     </Box>
   );
 }
